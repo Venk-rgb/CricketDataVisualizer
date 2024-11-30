@@ -2,52 +2,36 @@ package application;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import javafx.scene.control.ListView;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 public class MatchView {
-    private JsonArray matchData;
+	private JsonObject matchInfo;
 
-    public MatchView(JsonArray matchData) {
-        this.matchData = matchData;
-    }
+	public MatchView(JsonObject matchInfo) {
+		this.matchInfo = matchInfo;
+	}
 
-    public VBox getView() {
-        VBox layout = new VBox();
-        layout.setSpacing(10);
+	public VBox getView() {
+		VBox layout = new VBox();
+		layout.setSpacing(10);
+		layout.setAlignment(Pos.CENTER);
 
-        ListView<String> matchList = new ListView<>();
+		String name = matchInfo.get("name").getAsString();
+		String venue = matchInfo.get("venue").getAsString();
+		String date = matchInfo.get("date").getAsString();
+		JsonArray teams = matchInfo.getAsJsonArray("teams");
 
-        if (matchData.size() == 0) {
-            matchList.getItems().add("No matches available.");
-        } else {
-            for (int i = 0; i < matchData.size(); i++) {
-                JsonObject match = matchData.get(i).getAsJsonObject();
+		String team1 = teams.size() > 0 ? teams.get(0).getAsString() : "Unknown Team";
+		String team2 = teams.size() > 1 ? teams.get(1).getAsString() : "Unknown Team";
 
-                // Extract teams from the "teams" array
-                JsonArray teams = match.has("teams") && !match.get("teams").isJsonNull()
-                        ? match.get("teams").getAsJsonArray()
-                        : new JsonArray();
+		Label nameLabel = new Label("Match: " + name);
+		Label venueLabel = new Label("Venue: " + venue);
+		Label dateLabel = new Label("Date: " + date);
+		Label teamsLabel = new Label("Teams: " + team1 + " vs " + team2);
 
-                String team1 = teams.size() > 0 ? teams.get(0).getAsString() : "Unknown Team 1";
-                String team2 = teams.size() > 1 ? teams.get(1).getAsString() : "Unknown Team 2";
-
-                // Extract other fields
-                String status = match.has("status") && !match.get("status").isJsonNull()
-                        ? match.get("status").getAsString()
-                        : "Unknown Status";
-
-                String venue = match.has("venue") && !match.get("venue").isJsonNull()
-                        ? match.get("venue").getAsString()
-                        : "Unknown Venue";
-
-                // Build the match info string
-                String matchInfo = team1 + " vs " + team2 + " - " + status + " @ " + venue;
-                matchList.getItems().add(matchInfo);
-            }
-        }
-
-        layout.getChildren().add(matchList);
-        return layout;
-    }
+		layout.getChildren().addAll(nameLabel, venueLabel, dateLabel, teamsLabel);
+		return layout;
+	}
 }

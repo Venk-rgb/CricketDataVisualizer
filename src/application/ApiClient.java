@@ -1,6 +1,5 @@
 package application;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import okhttp3.OkHttpClient;
@@ -8,55 +7,68 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class ApiClient {
-    private static final String API_KEY = "1ea530e7-eee6-4c27-a0f7-686feb0b16e7";
-    private static final String BASE_URL = "https://api.cricapi.com/v1";
-    private final OkHttpClient client;
-    private final Gson gson;
+	private final String BASE_URL = "https://api.cricapi.com/v1";
+	private final String API_KEY = "1ea530e7-eee6-4c27-a0f7-686feb0b16e7";
+	private OkHttpClient client = new OkHttpClient();
 
-    public ApiClient() {
-        this.client = new OkHttpClient();
-        this.gson = new Gson();
-    }
+	public JsonArray fetchSeriesList() {
+		String url = BASE_URL + "/series?apikey=" + API_KEY;
+		return fetchJsonArray(url);
+	}
 
-    // Fetch general data as JsonArray
-    public JsonArray fetchData(String endpoint) throws Exception {
-        String url = BASE_URL + endpoint + "?apikey=" + API_KEY + "&offset=0";
+	public JsonObject fetchSeriesInfo(String seriesId) {
+		String url = BASE_URL + "/series_info?apikey=" + API_KEY + "&id=" + seriesId;
+		return fetchJsonObject(url);
+	}
 
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
+	public JsonObject fetchMatchInfo(String matchId) {
+		String url = BASE_URL + "/match_info?apikey=" + API_KEY + "&id=" + matchId;
+		return fetchJsonObject(url);
+	}
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Failed to fetch data: HTTP " + response.code());
-            }
+	public JsonArray fetchPlayerList() {
+		String url = BASE_URL + "/players?apikey=" + API_KEY; // Assumes a generic endpoint for player list
+		return fetchJsonArray(url);
+	}
 
-            JsonObject responseObject = gson.fromJson(response.body().string(), JsonObject.class);
+	public JsonObject fetchPlayerInfo(String playerId) {
+		String url = BASE_URL + "/players_info?apikey=" + API_KEY + "&id=" + playerId;
+		return fetchJsonObject(url);
+	}
 
-            return responseObject.getAsJsonArray("data");
-        }
-    }
+	private JsonArray fetchJsonArray(String url) {
+		try {
+			Request request = new Request.Builder().url(url).build();
+			try (Response response = client.newCall(request).execute()) {
+				if (!response.isSuccessful())
+					throw new RuntimeException("Failed: HTTP " + response.code());
 
-    // Fetch player stats (requires player ID)
-    public JsonObject fetchPlayerInfo(String playerId) throws Exception {
-        String url = BASE_URL + "/players_info?apikey=" + API_KEY + "&id=" + playerId;
-        Request request = new Request.Builder().url(url).build();
+				JsonObject jsonResponse = new com.google.gson.JsonParser().parse(response.body().string())
+						.getAsJsonObject();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Failed to fetch player info: HTTP " + response.code());
-            }
+				if (jsonResponse.has("data") && !jsonResponse.get("data").isJsonNull()) {
+					return jsonResponse.getAsJsonArray("data");
+				} else {
+					throw new RuntimeException("No 'data' field found in the response.");
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new JsonArray();
+		}
+	}
 
-            // Parse the JSON response
-            JsonObject jsonResponse = gson.fromJson(response.body().string(), JsonObject.class);
-
-            // Extract the "data" field
-            if (jsonResponse.has("data") && !jsonResponse.get("data").isJsonNull()) {
-                return jsonResponse.getAsJsonObject("data");
-            } else {
-                throw new RuntimeException("Player data is missing in the response.");
-            }
-        }
-    }
-
+	private JsonObject fetchJsonObject(String url) {
+		try {
+			Request request = new Request.Builder().url(url).build();
+			try (Response response = client.newCall(request).execute()) {
+				if (!response.isSuccessful())
+					throw new RuntimeException("Failed: HTTP " + response.code());
+				return new com.google.gson.JsonParser().parse(response.body().string()).getAsJsonObject();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new JsonObject();
+		}
+	}
 }

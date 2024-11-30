@@ -2,30 +2,47 @@ package application;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import javafx.scene.control.ComboBox;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
 public class SeriesView {
-    private JsonArray seriesData;
+	private JsonObject seriesInfo;
 
-    public SeriesView(JsonArray seriesData) {
-        this.seriesData = seriesData;
-    }
+	public SeriesView(JsonObject seriesInfo) {
+		this.seriesInfo = seriesInfo;
+	}
 
-    public VBox getView() {
-        VBox layout = new VBox(); // Create a new VBox instance for each call to avoid duplication
-        layout.setSpacing(10);
+	public VBox getView() {
+		VBox layout = new VBox();
+		layout.setSpacing(10);
+		layout.setAlignment(Pos.CENTER);
 
-        ComboBox<String> seriesDropdown = new ComboBox<>();
+		JsonObject info = seriesInfo.getAsJsonObject("data").getAsJsonObject("info");
+		String name = info.get("name").getAsString();
+		String startDate = info.get("startdate").getAsString();
+		String endDate = info.get("enddate").getAsString();
+		int t20s = info.get("t20").getAsInt();
+		int odis = info.get("odi").getAsInt();
+		int tests = info.get("test").getAsInt();
 
-        for (int i = 0; i < seriesData.size(); i++) {
-            JsonObject series = seriesData.get(i).getAsJsonObject();
-            seriesDropdown.getItems().add(series.get("name").getAsString());
-        }
+		Label nameLabel = new Label("Series: " + name);
+		Label dateLabel = new Label("Start Date: " + startDate + " | End Date: " + endDate);
+		Label t20Label = new Label("T20s: " + t20s);
+		Label odiLabel = new Label("ODIs: " + odis);
+		Label testLabel = new Label("Tests: " + tests);
 
-        // Add only unique components to the VBox
-        layout.getChildren().add(seriesDropdown);
+		JsonArray matchList = seriesInfo.getAsJsonObject("data").getAsJsonArray("matchList");
+		VBox matchesBox = new VBox();
+		matchesBox.setSpacing(5);
+		for (int i = 0; i < matchList.size(); i++) {
+			JsonObject match = matchList.get(i).getAsJsonObject();
+			String matchName = match.get("name").getAsString();
+			Label matchLabel = new Label("Match: " + matchName);
+			matchesBox.getChildren().add(matchLabel);
+		}
 
-        return layout;
-    }
+		layout.getChildren().addAll(nameLabel, dateLabel, t20Label, odiLabel, testLabel, matchesBox);
+		return layout;
+	}
 }
