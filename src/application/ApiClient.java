@@ -83,7 +83,7 @@ public class ApiClient {
 			try (Response response = client.newCall(request).execute()) {
 				if (!response.isSuccessful())
 					throw new RuntimeException("Failed: HTTP " + response.code());
-
+				
 				JsonObject jsonResponse = new com.google.gson.JsonParser().parse(response.body().string())
 						.getAsJsonObject();
 
