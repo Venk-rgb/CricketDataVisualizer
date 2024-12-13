@@ -6,7 +6,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -51,54 +55,67 @@ public class MainDashboard extends Application {
 
 		// Handle Series Selection
 		seriesComboBox.setOnAction(event -> {
-			String selectedSeries = seriesComboBox.getSelectionModel().getSelectedItem();
-			if (selectedSeries != null) {
-				String seriesId = seriesMap.get(selectedSeries);
+		    String selectedSeries = seriesComboBox.getSelectionModel().getSelectedItem();
+		    if (selectedSeries != null) {
+		        String seriesId = seriesMap.get(selectedSeries);
 
-				// Run a background task to fetch series info
-				Task<Void> fetchSeriesTask = new Task<>() {
-					@Override
-					protected Void call() {
-						JsonObject seriesInfo = apiClient.fetchSeriesInfo(seriesId);
-						if (seriesInfo != null && seriesInfo.has("data")) {
-							JsonObject seriesData = seriesInfo.getAsJsonObject("data").getAsJsonObject("info");
-							JsonArray matches = seriesInfo.getAsJsonObject("data").getAsJsonArray("matchList");
+		        // Run a background task to fetch series info
+		        Task<Void> fetchSeriesTask = new Task<>() {
+		            @Override
+		            protected Void call() {
+		                JsonObject seriesInfo = apiClient.fetchSeriesInfo(seriesId);
+		                if (seriesInfo != null && seriesInfo.has("data")) {
+		                    JsonObject seriesData = seriesInfo.getAsJsonObject("data").getAsJsonObject("info");
+		                    JsonArray matches = seriesInfo.getAsJsonObject("data").getAsJsonArray("matchList");
 
-							// Update the UI on the JavaFX application thread
-							Platform.runLater(() -> {
-								// Display series details
-								StringBuilder seriesDetails = new StringBuilder();
-								seriesDetails.append("Series Name: ").append(seriesData.get("name").getAsString())
-										.append("\n");
-								seriesDetails.append("Start Date: ").append(seriesData.get("startdate").getAsString())
-										.append("\n");
-								seriesDetails.append("End Date: ").append(seriesData.get("enddate").getAsString())
-										.append("\n");
-								seriesDetails.append("ODIs: ").append(seriesData.get("odi").getAsInt()).append("\n");
-								seriesDetails.append("T20s: ").append(seriesData.get("t20").getAsInt()).append("\n");
-								seriesDetails.append("Tests: ").append(seriesData.get("test").getAsInt()).append("\n");
-								seriesDetailsArea.setText(seriesDetails.toString());
+		                    Platform.runLater(() -> {
+		                        // Create and configure BarChart
+		                        CategoryAxis xAxis = new CategoryAxis();
+		                        xAxis.setLabel("Match Type");
 
-								// Populate matches list
-								matchesListView.getItems().clear();
-								for (int i = 0; i < matches.size(); i++) {
-									JsonObject match = matches.get(i).getAsJsonObject();
-									String matchName = match.get("name").getAsString();
-									String matchId = match.get("id").getAsString();
-									matchesListView.getItems().add(matchName);
-									matchMap.put(matchName, matchId);
-								}
-							});
-						} else {
-							Platform.runLater(() -> seriesDetailsArea.setText("Failed to fetch series details."));
-						}
-						return null;
-					}
-				};
+		                        NumberAxis yAxis = new NumberAxis();
+		                        yAxis.setLabel("Count");
 
-				// Run the task in a separate thread
-				new Thread(fetchSeriesTask).start();
-			}
+		                        BarChart<String, Number> seriesChart = new BarChart<>(xAxis, yAxis);
+		                        seriesChart.setTitle(seriesData.get("name").getAsString());
+		                        
+		                        // Set up series data
+		                        XYChart.Series<String, Number> chartData = new XYChart.Series<>();
+		                        chartData.getData().add(new XYChart.Data<>("ODIs", seriesData.get("odi").getAsInt()));
+		                        chartData.getData().add(new XYChart.Data<>("T20s", seriesData.get("t20").getAsInt()));
+		                        chartData.getData().add(new XYChart.Data<>("Tests", seriesData.get("test").getAsInt()));
+		                        seriesChart.getData().add(chartData);
+
+		                        // Create a popup window for BarChart
+		                        Stage chartStage = new Stage();
+		                        VBox chartLayout = new VBox(10);
+
+		                        // Add series name and date information as headings
+		                        Label seriesNameLabel = new Label("Series: " + seriesData.get("name").getAsString());
+		                        seriesNameLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold;");
+
+		                        Label dateRangeLabel = new Label("Start Date: " + seriesData.get("startdate").getAsString()
+		                                + " | End Date: " + seriesData.get("enddate").getAsString());
+		                        dateRangeLabel.setStyle("-fx-font-size: 12; -fx-font-style: italic;");
+
+		                        chartLayout.getChildren().addAll(seriesNameLabel, dateRangeLabel, seriesChart);
+		                        chartLayout.setStyle("-fx-padding: 10;");
+		                        
+		                        Scene chartScene = new Scene(chartLayout, 400, 300);
+		                        chartStage.setScene(chartScene);
+		                        chartStage.setTitle("Series Details");
+		                        chartStage.show();
+		                    });
+		                } else {
+		                    Platform.runLater(() -> seriesDetailsArea.setText("Failed to fetch series details."));
+		                }
+		                return null;
+		            }
+		        };
+
+		        // Run the task in a separate thread
+		        new Thread(fetchSeriesTask).start();
+		    }
 		});
 
 		// Handle Match Selection
@@ -163,52 +180,81 @@ public class MainDashboard extends Application {
 		// --- Player Role Distribution Tab ---
 		Tab roleDistributionTab = new Tab("Player Role Distribution");
 		VBox roleDistributionContent = new VBox();
+		roleDistributionContent.setSpacing(20); // Add spacing between the charts
+
+		// Create PieChart for Player Role Distribution
 		PieChart roleChart = new PieChart();
-		roleDistributionContent.getChildren().add(roleChart);
+		Label roleChartLabel = new Label("Player Role Distribution");
+
+		// Create BarChart for Player Country Distribution
+		CategoryAxis xAxis = new CategoryAxis();
+		xAxis.setLabel("Country");
+		NumberAxis yAxis = new NumberAxis();
+		yAxis.setLabel("Number of Players");
+
+		BarChart<String, Number> countryBarChart = new BarChart<>(xAxis, yAxis);
+		countryBarChart.setTitle("Player Country Distribution");
+
+		roleDistributionContent.getChildren().addAll(roleChartLabel, roleChart, countryBarChart);
 		roleDistributionTab.setContent(roleDistributionContent);
 
-		// Add a listener to fetch roles only when the tab is selected
+		// Add a listener to fetch data only when the tab is selected
 		roleDistributionTab.setOnSelectionChanged(event -> {
-			if (roleDistributionTab.isSelected() && roleChart.getData().isEmpty()) { // Only fetch if the tab is
-																						// selected and data is not
-																						// already loaded
-				Task<Void> fetchRolesTask = new Task<>() {
-					@Override
-					protected Void call() {
-						ExecutorService executor = Executors.newFixedThreadPool(10); // Thread pool with 10 threads
-						for (int i = 0; i < playerArray.size(); i++) {
-							JsonObject player = playerArray.get(i).getAsJsonObject();
-							String playerId = player.get("id").getAsString();
+		    if (roleDistributionTab.isSelected() && roleChart.getData().isEmpty() && countryBarChart.getData().isEmpty()) {
+		        Task<Void> fetchRolesAndCountriesTask = new Task<>() {
+		            @Override
+		            protected Void call() {
+		                ExecutorService executor = Executors.newFixedThreadPool(10); // Thread pool with 10 threads
+		                Map<String, Integer> countryCount = new HashMap<>(); // Country -> Count
 
-							executor.submit(() -> {
-								JsonObject playerInfo = apiClient.fetchPlayerInfo(playerId);
-								String role = playerInfo.has("data") && playerInfo.getAsJsonObject("data").has("role")
-										? playerInfo.getAsJsonObject("data").get("role").getAsString()
-										: "Unknown";
+		                for (int i = 0; i < playerArray.size(); i++) {
+		                    JsonObject player = playerArray.get(i).getAsJsonObject();
+		                    String playerId = player.get("id").getAsString();
 
-								synchronized (roleCount) {
-									roleCount.put(role, roleCount.getOrDefault(role, 0) + 1);
-								}
-							});
-						}
+		                    executor.submit(() -> {
+		                        JsonObject playerInfo = apiClient.fetchPlayerInfo(playerId);
+		                        JsonObject playerData = playerInfo.has("data") ? playerInfo.getAsJsonObject("data") : null;
 
-						executor.shutdown();
-						while (!executor.isTerminated()) {
-							// Wait for threads to complete
-						}
+		                        if (playerData != null) {
+		                            String role = playerData.has("role") ? playerData.get("role").getAsString() : "Unknown";
+		                            String country = playerData.has("country") ? playerData.get("country").getAsString() : "Unknown";
 
-						Platform.runLater(() -> {
-							roleChart.getData().clear();
-							roleCount.forEach((role, count) -> roleChart.getData().add(new PieChart.Data(role, count)));
-						});
+		                            synchronized (roleCount) {
+		                                roleCount.put(role, roleCount.getOrDefault(role, 0) + 1);
+		                            }
 
-						return null;
-					}
-				};
+		                            synchronized (countryCount) {
+		                                countryCount.put(country, countryCount.getOrDefault(country, 0) + 1);
+		                            }
+		                        }
+		                    });
+		                }
 
-				// Run the task in a separate thread
-				new Thread(fetchRolesTask).start();
-			}
+		                executor.shutdown();
+		                while (!executor.isTerminated()) {
+		                    // Wait for threads to complete
+		                }
+
+		                Platform.runLater(() -> {
+		                    // Update PieChart for roles
+		                    roleChart.getData().clear();
+		                    roleCount.forEach((role, count) -> roleChart.getData().add(new PieChart.Data(role, count)));
+
+		                    // Update BarChart for countries
+		                    countryBarChart.getData().clear();
+		                    XYChart.Series<String, Number> countrySeries = new XYChart.Series<>();
+		                    countrySeries.setName("Countries");
+		                    countryCount.forEach((country, count) -> countrySeries.getData().add(new XYChart.Data<>(country, count)));
+		                    countryBarChart.getData().add(countrySeries);
+		                });
+
+		                return null;
+		            }
+		        };
+
+		        // Run the task in a separate thread
+		        new Thread(fetchRolesAndCountriesTask).start();
+		    }
 		});
 
 		// Add all tabs
