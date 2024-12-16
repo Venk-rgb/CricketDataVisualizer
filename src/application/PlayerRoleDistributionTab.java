@@ -39,7 +39,9 @@ public class PlayerRoleDistributionTab {
         roleDistributionContent.getChildren().addAll(roleChartLabel, roleChart, countryBarChart);
 
         Tab roleDistributionTab = new Tab("Player Role Distribution", roleDistributionContent);
-
+        
+        // This prints two visualizations: Role distribution pie chart and countries bar chart.
+        // It uses multithreading as well.
         roleDistributionTab.setOnSelectionChanged(event -> {
             if (roleDistributionTab.isSelected() && roleChart.getData().isEmpty() && countryBarChart.getData().isEmpty()) {
                 Task<Void> fetchRolesAndCountriesTask = new Task<>() {

@@ -24,7 +24,8 @@ public class ApiClient {
 	public ApiClient() {
 		this.apiKey = fetchDecryptedApiKey();
 	}
-
+	
+	// Function to fetch decrypted api key from the backend
 	private String fetchDecryptedApiKey() {
 		try (Connection conn = DriverManager.getConnection(DB_URL)) {
 			String query = "SELECT api_key FROM api_keys WHERE service_name = ?";
@@ -43,7 +44,8 @@ public class ApiClient {
 			throw new RuntimeException("Failed to fetch or decrypt the API key.");
 		}
 	}
-
+	
+	// Function to decrypt the key using AES
 	private String decrypt(String encryptedData) throws Exception {
 		SecretKeySpec secretKey = new SecretKeySpec(ENCRYPTION_KEY.getBytes(), "AES");
 		Cipher cipher = Cipher.getInstance("AES");
@@ -51,32 +53,38 @@ public class ApiClient {
 		byte[] decryptedBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
 		return new String(decryptedBytes);
 	}
-
+	
+	// Function to fetch series list
 	public JsonArray fetchSeriesList() {
 		String url = BASE_URL + "/series?apikey=" + apiKey;
 		return fetchJsonArray(url);
 	}
 
+	// Function to fetch info for each series
 	public JsonObject fetchSeriesInfo(String seriesId) {
 		String url = BASE_URL + "/series_info?apikey=" + apiKey + "&id=" + seriesId;
 		return fetchJsonObject(url);
 	}
-
+	
+	// Function to get matches
 	public JsonObject fetchMatchInfo(String matchId) {
 		String url = BASE_URL + "/match_info?apikey=" + apiKey + "&id=" + matchId;
 		return fetchJsonObject(url);
 	}
 
+	// Function to fetch list of players
 	public JsonArray fetchPlayerList() {
 		String url = BASE_URL + "/players?apikey=" + apiKey; // Assumes a generic endpoint for player list
 		return fetchJsonArray(url);
 	}
-
+	
+	// Function to fetch info of players
 	public JsonObject fetchPlayerInfo(String playerId) {
 		String url = BASE_URL + "/players_info?apikey=" + apiKey + "&id=" + playerId;
 		return fetchJsonObject(url);
 	}
 
+	// Function to fetch array of jsons
 	private JsonArray fetchJsonArray(String url) {
 		try {
 			Request request = new Request.Builder().url(url).build();
@@ -98,7 +106,8 @@ public class ApiClient {
 			return new JsonArray();
 		}
 	}
-
+	
+	// Function to fetch json objects
 	private JsonObject fetchJsonObject(String url) {
 		try {
 			Request request = new Request.Builder().url(url).build();

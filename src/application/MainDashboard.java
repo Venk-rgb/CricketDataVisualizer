@@ -10,12 +10,12 @@ public class MainDashboard extends Application {
     public void start(Stage primaryStage) {
         TabPane tabPane = new TabPane();
 
-        // Add tabs
+        // Add tabs: Series, Players and Role Distribution tab
         tabPane.getTabs().add(new SeriesTab().getTab());
         tabPane.getTabs().add(new PlayersTab().getTab());
         tabPane.getTabs().add(new PlayerRoleDistributionTab().getTab());
 
-        // Stage setup
+        // Stage setup: a popup with all the three tabs and their functionalities
         Scene scene = new Scene(tabPane, 800, 600);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Cricket Visualizer");
