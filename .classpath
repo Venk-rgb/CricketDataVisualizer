@@ -11,11 +11,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX">
-		<attributes>
-			<attribute name="module" value="true"/>
-		</attributes>
-	</classpathentry>
 	<classpathentry kind="lib" path="/Users/venk/Desktop/NYU MSCS/Fall 2024/Intro To Java/Project/lib/okhttp-3.14.9.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -36,12 +31,17 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/venk/Downloads/sqlite-jdbc-3.47.0.0.jar">
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JavaFX">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/Users/venk/Downloads/slf4j-api-2.0.9.jar">
+	<classpathentry kind="lib" path="/Users/venk/Desktop/NYU MSCS/Fall 2024/Intro To Java/Project/lib/slf4j-api-2.0.9.jar">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/venk/Desktop/NYU MSCS/Fall 2024/Intro To Java/Project/lib/sqlite-jdbc-3.47.0.0.jar">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
